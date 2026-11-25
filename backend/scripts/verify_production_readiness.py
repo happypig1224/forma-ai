@@ -123,7 +123,8 @@ def run_checks():
 
     # 6. HTTP Health Endpoints Check
     print("\n[6/7] Backend HTTP Health Endpoints:")
-    base_url = f"http://{settings.host}:{settings.port}"
+    host_for_probe = "127.0.0.1" if settings.host in ("0.0.0.0", "::") else settings.host
+    base_url = f"http://{host_for_probe}:{settings.port}"
     for ep in ["/health", "/health/live", "/health/ready"]:
         try:
             req = urllib.request.Request(f"{base_url}{ep}", method="GET")

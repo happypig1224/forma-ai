@@ -245,8 +245,19 @@ jobs:
         working-directory: backend
         run: uv run python scripts/seed_popular_categories.py
 
-      - name: Run Production Pre-Flight Inspection Script
+      - name: Start FormaAI Backend Service in Background
         working-directory: backend
         run: |
           mkdir -p /tmp/formaai-ci-prod-storage
-          uv run python scripts/verify_production_readiness.py
+          uv run python -m formaai &
+          for i in $(seq 1 30); do
+            if curl -s -f http://127.0.0.1:8000/health > /dev/null 2>&1; then
+              echo "FormaAI backend is up and responding on port 8000!"
+              break
+            fi
+            sleep 0.5
+          done
+
+      - name: Run Production Pre-Flight Inspection Script
+        working-directory: backend
+        run: uv run python scripts/verify_production_readiness.py
