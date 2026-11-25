@@ -1,0 +1,278 @@
+{
+  "meta": {
+    "n_candidates": 23,
+    "n_rename": 11,
+    "n_cohesion": 11,
+    "n_colon": 1,
+    "n_iso3": 0,
+    "truncated": false
+  },
+  "rename": [
+    {
+      "type": "rename",
+      "file": "PRD.md",
+      "line": 7,
+      "para": "FormaAI 支持电商、品牌、知识和故事短视频制作。用户从主题或已有资料开始，确认文字方案与关键帧后生成镜头视频，最后手动合成并下载。制作过程中支持参考图约束、镜头衔接、单镜重做和任务恢复。",
+      "label": "0组",
+      "confidence": "高",
+      "reason": "类型、制作阶段和功能分别指不同对象，没有同义替换。",
+      "disposition": "保留"
+    },
+    {
+      "type": "rename",
+      "file": "PRD.md",
+      "line": 9,
+      "para": "首先满足个人同时制作多个视频的需要。提供用户模块，所有任务、分类、资料、资产和服务凭证按用户私有隔离。前端采用 Vue 3，后端采用 FastAPI，数据库采用 MySQL，支持本机和服务器部署。",
+      "label": "0组",
+      "confidence": "高",
+      "reason": "用户、数据类型和技术组件分别指不同对象。",
+      "disposition": "保留"
+    },
+    {
+      "type": "rename",
+      "file": "PRD.md",
+      "line": 20,
+      "para": "四种类型分别维护分类。系统根据输入完整度补全方案，每次默认重新制作，只有用户主动选择才复用已有内容。",
+      "label": "0组",
+      "confidence": "高",
+      "reason": "分类、方案和已有内容分别指不同对象。",
+      "disposition": "保留"
+    },
+    {
+      "type": "rename",
+      "file": "PRD.md",
+      "line": 37,
+      "para": "关键帧方案由系统提出，可涉及首帧、首尾帧与连续镜头衔接。具体支持方式取决于首版接入服务的能力，服务尚未确定。",
+      "label": "0组",
+      "confidence": "高",
+      "reason": "关键帧方案与具体参考方式是整体与子项关系。",
+      "disposition": "保留"
+    },
+    {
+      "type": "rename",
+      "file": "PRD.md",
+      "line": 39,
+      "para": "音频支持 AI 配音、上传配音、背景音乐和无配音模式。用户不编辑时间线，字幕与音画对齐由系统处理。配音长度与视频时长冲突暂不专项处理，也不因此暂停，具体合成行为待定。",
+      "label": "0组",
+      "confidence": "高",
+      "reason": "音频方式与时长冲突是不同需求，没有换名指称。",
+      "disposition": "保留"
+    },
+    {
+      "type": "rename",
+      "file": "PRD.md",
+      "line": 60,
+      "para": "候选内容不写入长期业务表。分镜脚本和生成视频不设长期业务内容表，数据库可保留必要的任务控制信息及文件引用。可复用的视频分析记录特征、结构拆解和创作方向。",
+      "label": "0组",
+      "confidence": "高",
+      "reason": "脚本、视频与特征分析属于不同数据类别。",
+      "disposition": "保留"
+    },
+    {
+      "type": "rename",
+      "file": "PRD.md",
+      "line": 62,
+      "para": "每项资产只属于一个分类，跨分类使用时另存一份。清理任务不能删除已经入库的可复用内容，相关文件需独立保存。",
+      "label": "0组",
+      "confidence": "高",
+      "reason": "资产是可复用内容的子类，不是同义重命名。",
+      "disposition": "保留"
+    },
+    {
+      "type": "rename",
+      "file": "PRD.md",
+      "line": 64,
+      "para": "只允许清理已结束任务，包含成功和最终失败。运行、等待重试或暂停中的任务不可清理。提供“仅清理临时文件”和“彻底删除任务”两种操作，清理后的恢复入口应反映实际产物是否存在。",
+      "label": "0组",
+      "confidence": "高",
+      "reason": "结束状态与清理操作分别表达状态和动作。",
+      "disposition": "保留"
+    },
+    {
+      "type": "rename",
+      "file": "PRD.md",
+      "line": 76,
+      "para": "每个用户配置自己的服务凭证。首版每种能力接入一个确定服务，覆盖文本、图像、视频、配音、联网搜索及电商数据。任务之间不共享执行上下文，跨用户不能访问凭证或结果。",
+      "label": "0组",
+      "confidence": "高",
+      "reason": "服务能力、凭证和上下文是不同概念。",
+      "disposition": "保留"
+    },
+    {
+      "type": "rename",
+      "file": "PRD.md",
+      "line": 78,
+      "para": "生成与重做由用户控制，不设置业务预算拦截。记录服务返回的已知用量和费用，未知费用不能记为零。下载或查询失败不能直接触发重新付费生成。",
+      "label": "0组",
+      "confidence": "高",
+      "reason": "用量、费用与调用失败是不同对象和条件。",
+      "disposition": "保留"
+    },
+    {
+      "type": "rename",
+      "file": "PRD.md",
+      "line": 82,
+      "para": "首版不做共享素材库、团队协作、手动时间线编辑和多供应商自动切换。不自动复用历史内容，不自动重做受影响的后续镜头，也不自动清理临时产物。",
+      "label": "0组",
+      "confidence": "高",
+      "reason": "功能范围与自动行为分别列出排除项。",
+      "disposition": "保留"
+    }
+  ],
+  "cohesion": [
+    {
+      "type": "cohesion",
+      "file": "PRD.md",
+      "line": 9,
+      "prev_tail": "制作过程中支持参考图约束、镜头衔接、单镜重做和任务恢复",
+      "next_head": "首先满足个人同时制作多个视频的需要",
+      "label": "明确承接",
+      "confidence": "高",
+      "reason": "从视频制作继续说明使用人群。",
+      "disposition": "保留",
+      "note": "按候选接口独立判断。抽取省略了标题、表格与列表，不据此认定原文缺少结构说明。"
+    },
+    {
+      "type": "cohesion",
+      "file": "PRD.md",
+      "line": 20,
+      "prev_tail": "前端采用 Vue 3，后端采用 FastAPI，数据库采用 MySQL，支持本机和服务器部署",
+      "next_head": "四种类型分别维护分类",
+      "label": "主题跳转缺少说明",
+      "confidence": "高",
+      "reason": "从技术部署转向内容分类。",
+      "disposition": "保留",
+      "note": "按候选接口独立判断。抽取省略了标题、表格与列表，不据此认定原文缺少结构说明。"
+    },
+    {
+      "type": "cohesion",
+      "file": "PRD.md",
+      "line": 37,
+      "prev_tail": "系统根据输入完整度补全方案，每次默认重新制作，只有用户主动选择才复用已有内容",
+      "next_head": "关键帧方案由系统提出，可涉及首帧、首尾帧与连续镜头衔接",
+      "label": "有关但转换突然",
+      "confidence": "高",
+      "reason": "从复用规则转向关键帧制作。",
+      "disposition": "保留",
+      "note": "按候选接口独立判断。抽取省略了标题、表格与列表，不据此认定原文缺少结构说明。"
+    },
+    {
+      "type": "cohesion",
+      "file": "PRD.md",
+      "line": 39,
+      "prev_tail": "具体支持方式取决于首版接入服务的能力，服务尚未确定",
+      "next_head": "音频支持 AI 配音、上传配音、背景音乐和无配音模式",
+      "label": "有关但转换突然",
+      "confidence": "高",
+      "reason": "从关键帧服务转向音频支持。",
+      "disposition": "保留",
+      "note": "按候选接口独立判断。抽取省略了标题、表格与列表，不据此认定原文缺少结构说明。"
+    },
+    {
+      "type": "cohesion",
+      "file": "PRD.md",
+      "line": 60,
+      "prev_tail": "配音长度与视频时长冲突暂不专项处理，也不因此暂停，具体合成行为待定",
+      "next_head": "候选内容不写入长期业务表",
+      "label": "主题跳转缺少说明",
+      "confidence": "高",
+      "reason": "从音频冲突转向数据保存。",
+      "disposition": "保留",
+      "note": "按候选接口独立判断。抽取省略了标题、表格与列表，不据此认定原文缺少结构说明。"
+    },
+    {
+      "type": "cohesion",
+      "file": "PRD.md",
+      "line": 62,
+      "prev_tail": "可复用的视频分析记录特征、结构拆解和创作方向",
+      "next_head": "每项资产只属于一个分类，跨分类使用时另存一份",
+      "label": "有关但转换突然",
+      "confidence": "高",
+      "reason": "从分析记录转向资产分类。",
+      "disposition": "保留",
+      "note": "按候选接口独立判断。抽取省略了标题、表格与列表，不据此认定原文缺少结构说明。"
+    },
+    {
+      "type": "cohesion",
+      "file": "PRD.md",
+      "line": 64,
+      "prev_tail": "清理任务不能删除已经入库的可复用内容，相关文件需独立保存",
+      "next_head": "只允许清理已结束任务，包含成功和最终失败",
+      "label": "明确承接",
+      "confidence": "高",
+      "reason": "继续说明任务清理的条件。",
+      "disposition": "保留",
+      "note": "按候选接口独立判断。抽取省略了标题、表格与列表，不据此认定原文缺少结构说明。"
+    },
+    {
+      "type": "cohesion",
+      "file": "PRD.md",
+      "line": 76,
+      "prev_tail": "提供“仅清理临时文件”和“彻底删除任务”两种操作，清理后的恢复入口应反映实际产物是否存在",
+      "next_head": "每个用户配置自己的服务凭证",
+      "label": "主题跳转缺少说明",
+      "confidence": "高",
+      "reason": "从清理转向服务凭证。",
+      "disposition": "保留",
+      "note": "按候选接口独立判断。抽取省略了标题、表格与列表，不据此认定原文缺少结构说明。"
+    },
+    {
+      "type": "cohesion",
+      "file": "PRD.md",
+      "line": 78,
+      "prev_tail": "任务之间不共享执行上下文，跨用户不能访问凭证或结果",
+      "next_head": "生成与重做由用户控制，不设置业务预算拦截",
+      "label": "有关但转换突然",
+      "confidence": "高",
+      "reason": "从隔离转向生成费用控制。",
+      "disposition": "保留",
+      "note": "按候选接口独立判断。抽取省略了标题、表格与列表，不据此认定原文缺少结构说明。"
+    },
+    {
+      "type": "cohesion",
+      "file": "PRD.md",
+      "line": 82,
+      "prev_tail": "下载或查询失败不能直接触发重新付费生成",
+      "next_head": "首版不做共享素材库、团队协作、手动时间线编辑和多供应商自动切换",
+      "label": "有关但转换突然",
+      "confidence": "高",
+      "reason": "从失败处理转向首版功能范围。",
+      "disposition": "保留",
+      "note": "按候选接口独立判断。抽取省略了标题、表格与列表，不据此认定原文缺少结构说明。"
+    },
+    {
+      "type": "cohesion",
+      "file": "PRD.md",
+      "line": 101,
+      "prev_tail": "不自动复用历史内容，不自动重做受影响的后续镜头，也不自动清理临时产物",
+      "next_head": "数据库表结构和接口设计在业务流程确认后展开",
+      "label": "主题跳转缺少说明",
+      "confidence": "高",
+      "reason": "从排除功能转向后续设计工作。",
+      "disposition": "保留",
+      "note": "按候选接口独立判断。抽取省略了标题、表格与列表，不据此认定原文缺少结构说明。"
+    }
+  ],
+  "colon": [
+    {
+      "type": "colon",
+      "file": "PRD.md",
+      "line": 3,
+      "colon_before": "状态",
+      "colon_after": "需求讨论稿。更新日期：2026-11-19。",
+      "sentence": "状态：需求讨论稿。更新日期：2026-11-19。",
+      "label": "标题时间比例元数据或版式用途",
+      "confidence": "高",
+      "reason": "状态和更新日期是文档元数据。",
+      "disposition": "保留"
+    }
+  ],
+  "iso3": [],
+  "summary": {
+    "rename_per_analyzed_paragraph": 0,
+    "max_explicit_cohesion_chain": 1,
+    "conclusion_colons": 0,
+    "colon_candidates": 1,
+    "high_isomorphic_triples": 0
+  }
+}

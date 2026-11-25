@@ -1,0 +1,96 @@
+services:
+  # MySQL 8.0 Database with UTF-8mb4 and strict zero-trust persistence
+  mysql:
+    image: mysql:8.0
+    container_name: formaai-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${FORMAAI_MYSQL_PASSWORD:-root}
+      MYSQL_DATABASE: ${FORMAAI_MYSQL_DATABASE:-formaai}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+00:00
+      - --max_connections=200
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Redis 7 Zero-Trust Session and Quota Cache
+  redis:
+    image: redis:7-alpine
+    container_name: formaai-redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD:-123456} --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-123456}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # FastAPI Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: formaai-backend
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      FORMAAI_APP_ENV: production
+      FORMAAI_HOST: "0.0.0.0"
+      FORMAAI_PORT: 8000
+      FORMAAI_RELOAD: "false"
+      FORMAAI_LOG_LEVEL: info
+      FORMAAI_MYSQL_HOST: mysql
+      FORMAAI_MYSQL_PORT: 3306
+      FORMAAI_MYSQL_DATABASE: ${FORMAAI_MYSQL_DATABASE:-formaai}
+      FORMAAI_MYSQL_USER: root
+      FORMAAI_MYSQL_PASSWORD: ${FORMAAI_MYSQL_PASSWORD:-root}
+      FORMAAI_REDIS_URL: redis://:${REDIS_PASSWORD:-123456}@redis:6379/0
+      FORMAAI_JWT_ACCESS_SECRET: ${FORMAAI_JWT_ACCESS_SECRET:-formaai-access-secret-32-bytes-minimum!}
+      FORMAAI_JWT_REFRESH_SECRET: ${FORMAAI_JWT_REFRESH_SECRET:-formaai-refresh-secret-32-bytes-minimum!}
+      FORMAAI_STORAGE_DIR: /app/data/storage
+      FORMAAI_CORS_ORIGINS: '["http://localhost", "http://localhost:80", "http://127.0.0.1"]'
+      FORMAAI_CORS_ALLOW_CREDENTIALS: "true"
+    volumes:
+      - storage_data:/app/data/storage
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Vue 3 Frontend with Nginx Web Server & Reverse Proxy
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: formaai-frontend
+    restart: always
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+
+volumes:
+  mysql_data:
+  redis_data:
+  storage_data:
