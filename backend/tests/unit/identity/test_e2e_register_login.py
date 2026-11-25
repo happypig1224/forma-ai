@@ -11,9 +11,6 @@ Validates the full business lifecycle on real Redis 7.4.0:
 8. Account state restriction: disabled account rejected from auth and login.
 """
 
-import shutil
-import subprocess
-import time
 from collections.abc import Generator
 from typing import Any
 
@@ -33,6 +30,8 @@ from formaai.modules.identity.dependencies import (
 from formaai.modules.identity.models import UserAccount
 from formaai.modules.identity.router import auth_router
 from formaai.modules.identity.sessions import SessionManager
+
+from .redis_provider import provide_test_redis
 
 E2E_AUTH_REDIS_PORT = 6391
 
@@ -122,8 +121,6 @@ class InMemoryDbSession:
                         setattr(user, col_name, v)
         return None
 
-
-from .redis_provider import provide_test_redis
 
 @pytest.fixture(scope="module")
 def real_redis_server() -> Generator[Redis]:

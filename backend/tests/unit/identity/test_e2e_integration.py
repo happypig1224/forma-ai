@@ -10,8 +10,6 @@ Validates the entire business lifecycle on real Redis 7.4.0:
 7. Perform multi-device logout-all via MySQL version increment.
 """
 
-import shutil
-import subprocess
 import time
 from collections.abc import Generator
 from typing import Annotated

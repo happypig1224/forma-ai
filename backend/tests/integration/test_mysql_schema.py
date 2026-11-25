@@ -82,11 +82,18 @@ def check_violation(session, constraint_name):
     assert constraint_name in str(captured.value.orig)
 
 
-def test_only_two_business_tables_and_utc_connection(mysql_engine):
+def test_business_tables_and_utc_connection(mysql_engine):
     assert set(inspect(mysql_engine).get_table_names()) == {
         "alembic_version",
         "user_account",
         "category",
+        "material",
+        "asset",
+        "video_task",
+        "video_shot",
+        "video_attempt",
+        "video_decision",
+        "usage_record",
     }
     with mysql_engine.connect() as connection:
         assert connection.scalar(text("SELECT @@session.time_zone")) == "+00:00"
@@ -198,7 +205,7 @@ def test_reapplying_head_preserves_existing_rows_and_schema(mysql_engine):
             command.check(config)
             assert (
                 connection.scalar(text("SELECT version_num FROM alembic_version"))
-                == "20261119_01"
+                == "20261123_07"
             )
         with Session(mysql_engine) as checked:
             assert (

@@ -1,8 +1,6 @@
 """Unit and concurrency tests for Phase 2 Redis session management and Lua rotation."""
 
 import concurrent.futures
-import shutil
-import subprocess
 import time
 from collections.abc import Generator
 
@@ -14,6 +12,7 @@ from formaai.modules.identity.sessions import (
     SessionData,
     SessionManager,
 )
+
 from .redis_provider import provide_test_redis
 
 TEST_REDIS_PORT = 6389

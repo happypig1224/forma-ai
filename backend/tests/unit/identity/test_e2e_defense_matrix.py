@@ -6,9 +6,6 @@ Vector 2: RFC 9700 token replay detection and session family self-destruction.
 Vector 3: Administrative state transition lockout.
 """
 
-import shutil
-import subprocess
-import time
 from collections.abc import Generator
 from datetime import UTC, datetime
 from typing import Annotated, Any
@@ -29,6 +26,7 @@ from formaai.modules.identity.dependencies import (
 from formaai.modules.identity.models import UserAccount
 from formaai.modules.identity.router import auth_router
 from formaai.modules.identity.sessions import SessionManager
+
 from .redis_provider import provide_test_redis
 
 DEFENSE_MATRIX_PORT = 6394

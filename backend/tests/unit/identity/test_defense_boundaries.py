@@ -7,9 +7,6 @@ Covers:
 4. Real-time account status mutation: active -> disabling -> disabled/deleted.
 """
 
-import shutil
-import subprocess
-import time
 from collections.abc import Generator
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
@@ -31,6 +28,7 @@ from formaai.modules.identity.dependencies import (
 from formaai.modules.identity.models import UserAccount
 from formaai.modules.identity.router import auth_router
 from formaai.modules.identity.sessions import SessionManager
+
 from .redis_provider import provide_test_redis
 
 DEFENSE_REDIS_PORT = 6392
