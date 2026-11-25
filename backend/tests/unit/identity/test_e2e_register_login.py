@@ -123,49 +123,12 @@ class InMemoryDbSession:
         return None
 
 
+from .redis_provider import provide_test_redis
+
 @pytest.fixture(scope="module")
 def real_redis_server() -> Generator[Redis]:
-    """Start an isolated background Redis server process on dedicated port."""
-    redis_bin = shutil.which("redis-server")
-    if not redis_bin:
-        redis_bin = r"D:\Redis-7.4.0-Windows\redis-server.exe"
-
-    proc = subprocess.Popen(
-        [
-            redis_bin,
-            "--port",
-            str(E2E_AUTH_REDIS_PORT),
-            "--save",
-            "",
-            "--appendonly",
-            "no",
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-    client = Redis(host="127.0.0.1", port=E2E_AUTH_REDIS_PORT, db=0)
-    connected = False
-    for _ in range(30):
-        try:
-            if client.ping():
-                connected = True
-                break
-        except Exception:
-            time.sleep(0.1)
-
-    if not connected:
-        proc.terminate()
-        pytest.fail(f"Could not connect to Redis on port {E2E_AUTH_REDIS_PORT}")
-
-    yield client
-
-    client.close()
-    proc.terminate()
-    try:
-        proc.wait(timeout=3)
-    except subprocess.TimeoutExpired:
-        proc.kill()
+    """Start an isolated background Redis server process or connect to available test Redis."""
+    yield from provide_test_redis(E2E_AUTH_REDIS_PORT, db=10)
 
 
 @pytest.fixture

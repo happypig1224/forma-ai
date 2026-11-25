@@ -5,7 +5,14 @@ from alembic import context
 from formaai.config import load_settings
 from formaai.infrastructure.database import Base, build_engine
 from formaai.modules.identity.models import UserAccount  # noqa: F401
-from formaai.modules.library.models import Category  # noqa: F401
+from formaai.modules.library.models import Asset, Category, Material  # noqa: F401
+from formaai.modules.production.models import (  # noqa: F401
+    UsageRecord,
+    VideoAttempt,
+    VideoDecision,
+    VideoShot,
+    VideoTask,
+)
 
 target_metadata = Base.metadata
 

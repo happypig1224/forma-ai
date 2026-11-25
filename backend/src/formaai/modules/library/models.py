@@ -15,6 +15,7 @@ from sqlalchemy import (
     UniqueConstraint,
     text,
 )
+from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.orm import Mapped, mapped_column
 
 from formaai.infrastructure.database import Base, UTCDateTime
@@ -89,7 +90,7 @@ class Material(Base):
     )
     title: Mapped[str] = mapped_column(String(200))
     material_type: Mapped[str] = mapped_column(String(16))
-    content: Mapped[str] = mapped_column(Text)
+    content: Mapped[str] = mapped_column(Text().with_variant(LONGTEXT, "mysql"))
     sources: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(
         UTCDateTime(), server_default=text("CURRENT_TIMESTAMP(6)")

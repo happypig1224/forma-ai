@@ -14,52 +14,15 @@ from formaai.modules.identity.sessions import (
     SessionData,
     SessionManager,
 )
+from .redis_provider import provide_test_redis
 
 TEST_REDIS_PORT = 6389
 
 
 @pytest.fixture(scope="module")
 def isolated_redis_server() -> Generator[Redis]:
-    """Launch an isolated real Redis server on a dedicated test port."""
-    redis_exe = (
-        shutil.which("redis-server") or r"D:\Redis-7.4.0-Windows\redis-server.exe"
-    )
-    proc = subprocess.Popen(
-        [
-            redis_exe,
-            "--port",
-            str(TEST_REDIS_PORT),
-            "--save",
-            "",
-            "--appendonly",
-            "no",
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    # Wait for server startup
-    client: Redis = Redis(host="127.0.0.1", port=TEST_REDIS_PORT, decode_responses=True)
-    connected = False
-    for _ in range(30):
-        try:
-            if client.ping():
-                connected = True
-                break
-        except Exception:
-            time.sleep(0.1)
-
-    if not connected:
-        proc.kill()
-        pytest.fail("Failed to connect to isolated test Redis server")
-
-    yield client
-
-    client.close()
-    proc.terminate()
-    try:
-        proc.wait(timeout=3)
-    except subprocess.TimeoutExpired:
-        proc.kill()
+    """Launch an isolated real Redis server or connect to available test Redis."""
+    yield from provide_test_redis(TEST_REDIS_PORT, db=11)
 
 
 @pytest.fixture
