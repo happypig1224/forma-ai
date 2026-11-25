@@ -1,7 +1,7 @@
 # FormaAI Frontend Multi-Stage Production Dockerfile
 
 # Build stage
-FROM node:20-alpine AS build-stage
+FROM node:26-alpine AS build-stage
 WORKDIR /app
 
 COPY package*.json ./
