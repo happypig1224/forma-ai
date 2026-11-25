@@ -89,13 +89,13 @@ jobs:
   # Job 3: Full Test Suite with Real Service Containers
   # -------------------------------------------------------------
   backend-tests:
-    name: Backend Unit & Integration Tests (MySQL 8 + Redis 7)
+    name: Backend Unit & Integration Tests (MySQL 8.4 + Redis 7)
     needs: backend-quality
     runs-on: ubuntu-latest
 
     services:
       mysql:
-        image: mysql:8.0
+        image: mysql:8.4
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: formaai_test
@@ -106,9 +106,6 @@ jobs:
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
-          --character-set-server=utf8mb4
-          --collation-server=utf8mb4_unicode_ci
-          --default-time-zone=+00:00
 
       redis:
         image: redis:7-alpine
@@ -131,6 +128,7 @@ jobs:
       FORMAAI_MYSQL_USER: root
       FORMAAI_MYSQL_PASSWORD: root
       FORMAAI_MYSQL_DATABASE: formaai_test
+      FORMAAI_TEST_MYSQL_URL: mysql+pymysql://root:root@127.0.0.1:3306
       FORMAAI_REDIS_URL: redis://127.0.0.1:6379/0
       FORMAAI_JWT_ACCESS_SECRET: formaai-ci-access-secret-32-bytes-minimum!
       FORMAAI_JWT_REFRESH_SECRET: formaai-ci-refresh-secret-32-bytes-minimum!
@@ -178,7 +176,7 @@ jobs:
 
     services:
       mysql:
-        image: mysql:8.0
+        image: mysql:8.4
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: formaai
@@ -189,9 +187,6 @@ jobs:
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
-          --character-set-server=utf8mb4
-          --collation-server=utf8mb4_unicode_ci
-          --default-time-zone=+00:00
 
       redis:
         image: redis:7-alpine
