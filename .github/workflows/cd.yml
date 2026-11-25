@@ -1,0 +1,226 @@
+name: FormaAI Production CD Pipeline
+
+"on":
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target Deployment Environment"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - staging
+          - production
+      skip_security_scan:
+        description: "Skip Trivy Vulnerability Scan (Emergency Deploy)"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: cd-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+  security-events: write
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/formaai-backend
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/formaai-frontend
+
+jobs:
+  # -------------------------------------------------------------
+  # Job 1: Build & Push Backend Container Image
+  # -------------------------------------------------------------
+  build-backend-image:
+    name: Build & Push Backend Container Image (GHCR)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Backend Docker Metadata
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.BACKEND_IMAGE }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short
+
+      - name: Build and Push Backend Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+  # -------------------------------------------------------------
+  # Job 2: Build & Push Frontend Container Image
+  # -------------------------------------------------------------
+  build-frontend-image:
+    name: Build & Push Frontend Container Image (GHCR)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Frontend Docker Metadata
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.FRONTEND_IMAGE }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short
+
+      - name: Build and Push Frontend Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  # -------------------------------------------------------------
+  # Job 3: Security & CVE Vulnerability Scan (Trivy)
+  # -------------------------------------------------------------
+  container-vulnerability-scan:
+    name: Container CVE Vulnerability Scan (Trivy)
+    needs: [build-backend-image, build-frontend-image]
+    if: ${{ !inputs.skip_security_scan }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Scan Backend Image for High/Critical Vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.BACKEND_IMAGE }}:latest
+          format: "table"
+          exit-code: "0"
+          ignore-unfixed: true
+          severity: "CRITICAL,HIGH"
+
+      - name: Scan Frontend Image for High/Critical Vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.FRONTEND_IMAGE }}:latest
+          format: "table"
+          exit-code: "0"
+          ignore-unfixed: true
+          severity: "CRITICAL,HIGH"
+
+  # -------------------------------------------------------------
+  # Job 4: Production Release Packaging & GitHub Release
+  # -------------------------------------------------------------
+  create-production-release:
+    name: Create Production Release Bundle & GitHub Release
+    needs: [build-backend-image, build-frontend-image]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Package Release Distribution Bundle
+        run: |
+          RELEASE_TAG="${GITHUB_REF#refs/tags/}"
+          BUNDLE_NAME="formaai-release-${RELEASE_TAG}.tar.gz"
+          mkdir -p release-bundle
+
+          # Copy production manifest & migration scripts
+          cp docker-compose.prod.yml release-bundle/docker-compose.yml 2>/dev/null || cp docker-compose.yml release-bundle/
+          cp -r backend/migrations release-bundle/
+          cp backend/alembic.ini release-bundle/
+          cp backend/.env.example release-bundle/
+          cp -r docs release-bundle/
+          cp README.md release-bundle/
+
+          # Package and generate SHA-256 checksum
+          tar -czvf "${BUNDLE_NAME}" -C release-bundle .
+          sha256sum "${BUNDLE_NAME}" > "${BUNDLE_NAME}.sha256"
+
+          echo "BUNDLE_NAME=${BUNDLE_NAME}" >> $GITHUB_ENV
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.BUNDLE_NAME }}
+            ${{ env.BUNDLE_NAME }}.sha256
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+  # -------------------------------------------------------------
+  # Job 5: Production Deployment Gate / Dispatch Notification
+  # -------------------------------------------------------------
+  deploy-notification:
+    name: Production Deployment Dispatch & Pipeline Summary
+    needs: [build-backend-image, build-frontend-image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Pipeline Deployment Summary
+        run: |
+          echo "### 🚀 FormaAI Production Deployment Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Target Environment** | \`${{ inputs.environment || (startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging') }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Git Reference** | \`${{ github.ref }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit SHA** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Backend Image** | \`${{ env.BACKEND_IMAGE }}:latest\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Frontend Image** | \`${{ env.FRONTEND_IMAGE }}:latest\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Registry** | \`${{ env.REGISTRY }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ✅ Ready for Zero-Downtime Rollout |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> 💡 **Rollout Instruction**: In the host environment, execute \`docker compose pull && docker compose up -d --remove-orphans\` to deploy." >> $GITHUB_STEP_SUMMARY

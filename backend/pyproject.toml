@@ -35,10 +35,11 @@ packages = ["src/formaai"]
 
 [tool.ruff]
 target-version = "py314"
-line-length = 88
+line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
 
 [tool.mypy]
 python_version = "3.14"

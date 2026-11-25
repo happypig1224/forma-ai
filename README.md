@@ -2,6 +2,9 @@
 
 > **FormaAI** 是面向短视频工业化生产的企业级 AI 协同制作平台。系统采用清晰架构（Clean Architecture）设计，基于严格确定的八阶段状态机推进短视频全生命周期研发，内置 302.AI 三模态独立主备高可用网关（覆盖语言模型、图像生成与视频生成），支持多模态看图策划脚本与单镜图生视频重做，底层提供多租户存储隔离及精准账单审计能力。
 
+[![CI](https://github.com/happypig1224/forma-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/happypig1224/forma-ai/actions/workflows/ci.yml)
+[![CD](https://github.com/happypig1224/forma-ai/actions/workflows/cd.yml/badge.svg)](https://github.com/happypig1224/forma-ai/actions/workflows/cd.yml)
+[![CodeQL](https://github.com/happypig1224/forma-ai/actions/workflows/codeql.yml/badge.svg)](https://github.com/happypig1224/forma-ai/actions/workflows/codeql.yml)
 [![Python](https://img.shields.io/badge/Python-3.14+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com/)
 [![Vue](https://img.shields.io/badge/Vue-3.5+-4FC08D.svg)](https://vuejs.org/)
@@ -9,7 +12,7 @@
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4+-38B2AC.svg)](https://tailwindcss.com/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.4+-4479A1.svg)](https://www.mysql.com/)
 [![Redis](https://img.shields.io/badge/Redis-7.4+-DC382D.svg)](https://redis.io/)
-[![Tests](https://img.shields.io/badge/Tests-345%2B%20passed-success.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-354%20passed-success.svg)]()
 [![License](https://img.shields.io/badge/License-Proprietary-slate.svg)]()
 
 ---
@@ -23,6 +26,7 @@
 - [环境基线与前置要求](#环境基线与前置要求)
 - [本地开发与部署启动](#本地开发与部署启动)
 - [生产投产演练与准入预检](#生产投产演练与准入预检)
+- [生产 CI/CD 流水线与自动化运维](#生产-cicd-流水线与自动化运维)
 - [测试套件与代码质量门禁](#测试套件与代码质量门禁)
 - [核心 API 端点规范](#核心-api-端点规范)
 - [零信任安全与租户防护边界](#零信任安全与租户防护边界)
@@ -230,6 +234,51 @@ uv run python scripts/verify_production_readiness.py
 - `[PASS]` 脏数据排查：确保生产数据库处于洁净零 Mock 状态。
 - `[PASS]` 三级存活端点：`/health`、`/health/live`、`/health/ready` 状态 200。
 - `[PASS]` 前端编译工件验证：`frontend/dist/index.html` 完整性与打包尺寸。
+
+---
+
+## 生产 CI/CD 流水线与自动化运维
+
+FormaAI 在 `.github/workflows/` 中内置了符合企业安全标准的自动化 CI/CD 与容器发布流水线：
+
+```text
+.github/
+├── workflows/
+│   ├── ci.yml                 # 持续集成：代码静态分析、全矩阵测试、前端打包与投产预检
+│   ├── cd.yml                 # 持续交付：Docker 容器构建、GHCR 镜像分发、Trivy 漏洞扫描、版本归档
+│   └── codeql.yml             # 安全分析：GitHub Advanced Security 自动化代码与依赖漏洞扫描
+└── dependabot.yml             # 依赖治理：每周自动扫描并提交 Python、Node.js 与 Docker 安全补丁
+```
+
+### 1. CI 持续集成门禁（`.github/workflows/ci.yml`）
+
+任何推送到 `main` 或提交的 Pull Request 均会触发全自动化校验矩阵：
+- **静态质量与类型系统**：
+  - 后端：`uv run ruff check src` 结合 `uv run mypy` 执行严格类型推导（Zero Any Return）。
+  - 前端：`vue-tsc -b` 严格编译时类型检查与 `vite build` 生产打包验证。
+- **真实容器集成测试**：
+  - 动态拉起 `mysql:8.0`（UTF-8mb4、UTC 时间）与 `redis:7-alpine` 服务容器。
+  - 自动执行 Alembic 迁移至最新 Head，运行 354 项单元与集成测试套件（通过率 100%）。
+- **投产就绪度关卡（Production Readiness Gate）**：
+  - 测试通过后，执行 `verify_production_readiness.py` 进行生产配置、数据库快照、Redis 延迟及零 Mock 最终验收。
+
+### 2. CD 持续交付与生产发布（`.github/workflows/cd.yml`）
+
+在主分支合并或发布语义化版本标签（`v*`）时自动触发：
+- **多架构容器化构建**：
+  - 基于 Docker Buildx 与 GitHub Actions 缓存（`type=gha`）进行毫秒级增量编译。
+  - 自动向 GitHub Container Registry（GHCR）发布签名镜像：
+    - `ghcr.io/happypig1224/formaai-backend:latest`
+    - `ghcr.io/happypig1224/formaai-frontend:latest`
+- **Trivy 容器漏洞扫描**：
+  - 构建产物自动经由 Aqua Security Trivy 扫描 HIGH 与 CRITICAL 级别 CVE 漏洞。
+- **发布归档与零停机部署**：
+  - 打标签发布时自动打包生成包含 `docker-compose.prod.yml`、数据迁移脚本与配置模版的 `formaai-release-v*.tar.gz` 归档包并生成 SHA-256 校验和。
+  - 生产宿主机仅需拉取并执行：
+    ```bash
+    docker compose -f docker-compose.prod.yml pull
+    docker compose -f docker-compose.prod.yml up -d --remove-orphans
+    ```
 
 ---
 

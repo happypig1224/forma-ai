@@ -24,13 +24,12 @@ import json
 import logging
 import random
 import shutil
-import socket
 import subprocess
 import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from formaai.config import Settings, load_settings
 
@@ -121,7 +120,8 @@ class ModelGateway:
         )
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             raw_body = resp.read().decode("utf-8")
-            return json.loads(raw_body)
+            res: dict[str, Any] = cast(dict[str, Any], json.loads(raw_body))
+            return res
 
     def _call_llm_with_retries(
         self,
@@ -166,7 +166,7 @@ class ModelGateway:
                     continue
                 logger.error("302.AI LLM [%s] HTTP %d permanent error: %s", model_name, status_code, exc)
                 raise
-            except (urllib.error.URLError, TimeoutError, socket.timeout) as exc:
+            except (urllib.error.URLError, TimeoutError) as exc:
                 last_error = exc
                 if attempt < self.max_retries:
                     delay = (2 ** (attempt - 1)) * 0.5 + random.uniform(0.1, 0.3)
@@ -386,15 +386,15 @@ class ModelGateway:
                 "title": f"方案 B：场景共鸣型 · {theme}",
                 "badge": "高完播",
                 "desc": f"将【{theme}】自然融入高频真实场景，引发强烈情感认同。",
-                "hook": f"“每次遇到这个场景，总有人问我为什么能这么轻松应对……”",
+                "hook": "“每次遇到这个场景，总有人问我为什么能这么轻松应对……”",
                 "body": f"深度还原日常生活工作细节，让【{target_market}】看到切实改变。",
                 "cta": "“关注官方主页，探索更多质感解决方案。”",
             },
             {
                 "title": f"方案 C：硬核对比型 · {theme}",
                 "badge": "强公信",
-                "desc": f"量化对比核心参数，击穿疑虑，建立转化信任。",
-                "hook": f"“市面上同类宣传五花八门，今天直接拆解实测，用数据说话！”",
+                "desc": "量化对比核心参数，击穿疑虑，建立转化信任。",
+                "hook": "“市面上同类宣传五花八门，今天直接拆解实测，用数据说话！”",
                 "body": f"核心指标实测全面领先，专为注重实效的【{target_market}】打造。",
                 "cta": "“支持7天品质检验，点击详情立即体验。”",
             },
@@ -422,7 +422,8 @@ class ModelGateway:
             raise ModelGatewayError(f"302ai CLI error: {err_msg}")
 
         try:
-            return json.loads(proc.stdout.strip())
+            res: dict[str, Any] = cast(dict[str, Any], json.loads(proc.stdout.strip()))
+            return res
         except Exception as exc:
             raise ModelGatewayError(f"Failed to parse 302ai CLI output: {proc.stdout}") from exc
 

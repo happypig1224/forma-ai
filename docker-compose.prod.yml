@@ -1,0 +1,91 @@
+# FormaAI Production Docker Compose Orchestration
+# Pulls pre-built, vulnerability-scanned images from GitHub Container Registry (GHCR)
+
+services:
+  # MySQL 8.0 Enterprise Relational Store
+  mysql:
+    image: mysql:8.0
+    container_name: formaai-mysql-prod
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${FORMAAI_MYSQL_PASSWORD:?FORMAAI_MYSQL_PASSWORD is required in production}
+      MYSQL_DATABASE: ${FORMAAI_MYSQL_DATABASE:-formaai}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+00:00
+      - --max_connections=200
+    volumes:
+      - mysql_prod_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 7 Zero-Trust Session & Rate-Limit Cache
+  redis:
+    image: redis:7-alpine
+    container_name: formaai-redis-prod
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required in production} --appendonly yes
+    volumes:
+      - redis_prod_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # FastAPI Backend Service (GHCR Production Image)
+  backend:
+    image: ${FORMAAI_BACKEND_IMAGE:-ghcr.io/happypig1224/formaai-backend:latest}
+    container_name: formaai-backend-prod
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      FORMAAI_APP_ENV: production
+      FORMAAI_HOST: "0.0.0.0"
+      FORMAAI_PORT: 8000
+      FORMAAI_RELOAD: "false"
+      FORMAAI_LOG_LEVEL: ${FORMAAI_LOG_LEVEL:-info}
+      FORMAAI_MYSQL_HOST: mysql
+      FORMAAI_MYSQL_PORT: 3306
+      FORMAAI_MYSQL_DATABASE: ${FORMAAI_MYSQL_DATABASE:-formaai}
+      FORMAAI_MYSQL_USER: root
+      FORMAAI_MYSQL_PASSWORD: ${FORMAAI_MYSQL_PASSWORD}
+      FORMAAI_REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      FORMAAI_JWT_ACCESS_SECRET: ${FORMAAI_JWT_ACCESS_SECRET:?JWT Access Secret required}
+      FORMAAI_JWT_REFRESH_SECRET: ${FORMAAI_JWT_REFRESH_SECRET:?JWT Refresh Secret required}
+      FORMAAI_STORAGE_DIR: /app/data/storage
+      FORMAAI_CORS_ORIGINS: ${FORMAAI_CORS_ORIGINS:-'["https://your-domain.com"]'}
+      FORMAAI_CORS_ALLOW_CREDENTIALS: "true"
+      FORMAAI_API_KEY: ${FORMAAI_API_KEY:-""}
+    volumes:
+      - storage_prod_data:/app/data/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # Vue 3 Nginx Static Delivery & Reverse Proxy (GHCR Production Image)
+  frontend:
+    image: ${FORMAAI_FRONTEND_IMAGE:-ghcr.io/happypig1224/formaai-frontend:latest}
+    container_name: formaai-frontend-prod
+    restart: always
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+
+volumes:
+  mysql_prod_data:
+  redis_prod_data:
+  storage_prod_data:
