@@ -122,7 +122,7 @@ jobs:
         working-directory: backend
 
     env:
-      FORMAAI_APP_ENV: testing
+      FORMAAI_APP_ENV: test
       FORMAAI_MYSQL_HOST: 127.0.0.1
       FORMAAI_MYSQL_PORT: 3306
       FORMAAI_MYSQL_USER: root

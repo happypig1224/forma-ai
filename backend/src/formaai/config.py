@@ -21,7 +21,7 @@ class Settings(BaseSettings):
         hide_input_in_errors=True,
     )
 
-    app_env: Literal["development", "test", "production"] = "development"
+    app_env: Literal["development", "test", "testing", "production"] = "development"
     host: str = Field(default="127.0.0.1", min_length=1)
     port: int = Field(default=8000, ge=1, le=65535)
     reload: bool = False
