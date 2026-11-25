@@ -31,6 +31,8 @@
 
 ## 核心架构与技术特性
 
+![FormaAI 企业级系统分层架构拓扑图](docs/images/formaai-architecture.png)
+
 1. **工业级整洁架构（Clean Architecture）**
    - 严格分层隔离：基础设施层（Infrastructure）、领域模型（Domain Models）、应用服务（Router/Service）与交互契约（Schemas/DTO）。
    - 依赖反转与协议驱动：存储持久化、模型调度及用户会话均面向 Protocol 接口设计，测试桩与生产驱动可随时互换。
@@ -61,20 +63,7 @@
 
 系统使用强类型确定性有限状态机驱动视频制作流程，任何跨阶段跃迁均需提供幂等凭证与版本校验：
 
-```mermaid
-stateDiagram-v2
-    [*] --> created: 任务初始化快照
-    created --> research: 触发商业调研 (或 skip_research)
-    research --> script_proposal: 候选脚本策划
-    script_proposal --> script_confirmed: 锁定方案与技术规格 (时长/画幅/分辨率)
-    script_confirmed --> keyframes: 镜头切分与首尾帧规划
-    keyframes --> shot_video: 镜头视频并行制作
-    shot_video --> shot_video: 单镜独立重做 (I2V / Redo)
-    shot_video --> shot_video: 镜头变更级联复核 (needs_review)
-    shot_video --> composition: 门禁复核完成，触发成片合成
-    composition --> finished: 编码完成，成片归档
-    finished --> [*]
-```
+![FormaAI 短视频 8 阶段全生命周期状态机架构](docs/images/formaai-state-machine.png)
 
 状态机流转规则：
 - `created`：固化分类快照与业务初始输入（`theme`、`target_market`、`asset_ids`）。
