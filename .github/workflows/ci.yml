@@ -79,7 +79,7 @@ jobs:
           du -sh dist/
 
       - name: Upload Frontend Production Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-dist
           path: frontend/dist/
@@ -162,7 +162,7 @@ jobs:
 
       - name: Upload Test Results XML
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pytest-results
           path: backend/test-results.xml
