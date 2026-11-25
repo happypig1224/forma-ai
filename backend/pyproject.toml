@@ -1,0 +1,52 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "formaai-backend"
+version = "0.1.0"
+description = "FormaAI backend"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "alembic>=1.16,<2",
+    "argon2-cffi>=25.1.0",
+    "email-validator>=2.4.0",
+    "fastapi>=0.115,<1",
+    "httpx>=0.28.1",
+    "pydantic-settings>=2.8,<3",
+    "pyjwt>=2.8,<3",
+    "pymysql[rsa]>=1.1,<2",
+    "python-multipart>=0.0.34",
+    "redis>=6,<8",
+    "sqlalchemy>=2.0,<2.1",
+    "uvicorn>=0.34,<1",
+    "watchfiles>=1.3.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15,<2",
+    "pytest>=8.3,<10",
+    "ruff>=0.11,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/formaai"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.14"
+plugins = ["pydantic.mypy"]
+strict = true
+files = ["src/formaai"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib --basetemp=.pytest_tmp -p no:cacheprovider"
+markers = ["integration: requires an explicitly configured isolated MySQL test server"]
